@@ -57,11 +57,45 @@ test('frontend selection, reset, and batch parsing use the new claim shape', () 
     const source=fs.readFileSync('public/js/app.js','utf8');
     const context=vm.createContext({document:{getElementById:()=>({value:0})},clearBatchSection:()=>{},
         claimsContainer:{innerHTML:''},summary:{innerHTML:''}});
-    const slices = [source.slice(0,source.indexOf('//')), source.slice(source.indexOf('function renderClaims()'),source.indexOf('function updateDate(')),
+    const slices = [source.slice(0,source.indexOf('//')), source.slice(source.indexOf('function renderClaims()'),source.indexOf('function toggleLab(')),
         source.slice(source.indexOf('function clearForm()'),source.indexOf('const aboutBtn')),
         'const CLAIM_COLUMNS_PER_ROW=7;',source.slice(source.indexOf('function normalizeHeader('),source.indexOf('async function downloadBatchTemplate()'))];
     vm.runInContext(slices.join('\n'),context);
     vm.runInContext(`renderClaims(); updateClaimOption(0,'hasIronSucrose',true); updateClaimOption(0,'dialyzerType','reuse');`,context);
+    assert.match(context.claimsContainer.innerHTML,/class="date-text-input" type="text"/);
+    assert.match(context.claimsContainer.innerHTML,/onclick="openDatePicker\(0\)"/);
+    assert.doesNotMatch(context.claimsContainer.innerHTML,/id="renderDate0"[^>]+type="date"/);
+    assert.equal(vm.runInContext(`(() => {
+        let calls = 0;
+        const els = {
+            renderDatePicker0: { showPicker() { calls++; } },
+            renderDate0: { focus() { calls += 10; } }
+        };
+        document.getElementById = id => els[id] || { style: {} };
+        openDatePicker(0);
+        return calls;
+    })()`,context),1);
+    assert.equal(vm.runInContext(`(() => {
+        let calls = 0;
+        const els = {
+            renderDatePicker0: { showPicker() { throw new Error('blocked'); } },
+            renderDate0: { focus() { calls++; } }
+        };
+        document.getElementById = id => els[id] || { style: {} };
+        openDatePicker(0);
+        return calls;
+    })()`,context),1);
+    assert.equal(vm.runInContext(`(() => {
+        const els = {
+            dateError0: { style: {} },
+            renderDatePicker0: { value: '' },
+            renderDate0: { value: '' }
+        };
+        document.getElementById = id => els[id] || null;
+        syncPickedDate(0, '2026-08-02');
+        document.getElementById = () => ({ value: 0, style: {} });
+        return els.renderDate0.value + '|' + appState.claims[0].renderDate;
+    })()`,context),'2026-08-02|2026-08-02');
     assert.match(context.summary.innerHTML,/Iron Sucrose/); assert.match(context.summary.innerHTML,/Re-use/);
     assert.doesNotMatch(context.claimsContainer.innerHTML,/EPO Quantity|Access Type/);
     vm.runInContext('clearForm()',context);

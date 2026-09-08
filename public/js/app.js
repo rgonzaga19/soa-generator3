@@ -287,8 +287,18 @@ function renderClaims() {
             <div class="claim-grid">
                 <div>
                     <label for="renderDate${index}">Render Date</label>
-                    <input id="renderDate${index}" type="date" value="${claim.renderDate}"
-                        min="2020-01-01" max="${today}" onchange="updateDate(${index}, this.value)">
+                    <div class="date-entry">
+                        <input id="renderDate${index}" class="date-text-input" type="text" value="${claim.renderDate}"
+                            inputmode="numeric" maxlength="10" placeholder="YYYY-MM-DD" autocomplete="off"
+                            oninput="updateDate(${index}, this.value)">
+                        <button class="date-picker-button" type="button" aria-label="Choose render date"
+                            onclick="openDatePicker(${index})">
+                            <span aria-hidden="true"></span>
+                        </button>
+                        <input id="renderDatePicker${index}" class="date-picker-proxy" type="date" value="${claim.renderDate}"
+                            min="2020-01-01" max="${today}" tabindex="-1" aria-hidden="true"
+                            onchange="syncPickedDate(${index}, this.value)">
+                    </div>
                     <small id="dateError${index}" style="color:red; display:none;">Date cannot be in the future.</small>
                 </div>
                 <div>
@@ -322,6 +332,28 @@ function updateClaimOption(index, key, value) {
     renderSummary();
 }
 
+function openDatePicker(index) {
+    const input = document.getElementById(`renderDatePicker${index}`);
+    const textInput = document.getElementById(`renderDate${index}`);
+
+    if (!input || typeof input.showPicker !== "function") {
+        if (textInput) textInput.focus();
+        return;
+    }
+
+    try {
+        input.showPicker();
+    } catch (err) {
+        if (textInput) textInput.focus();
+    }
+}
+
+function syncPickedDate(index, value) {
+    const textInput = document.getElementById(`renderDate${index}`);
+    if (textInput) textInput.value = value;
+    updateDate(index, value);
+}
+
 function renderSummary() {
     summary.innerHTML = `<div class="summary-item"><b>Claims:</b> ${appState.claims.length}</div>` +
         appState.claims.map((c,i) => `<div class="summary-item claim-summary-item">
@@ -337,25 +369,29 @@ function renderSummary() {
 function updateDate(index, value) {
 
     const today = new Date().toISOString().split("T")[0];
+    const isCompleteDate = /^\d{4}-\d{2}-\d{2}$/.test(value);
 
     const error =
         document.getElementById(`dateError${index}`);
 
-    if (value > today) {
+    if (isCompleteDate && value > today) {
 
         error.style.display = "block";
 
         value = today;
 
-        // Update the visible input
-        const inputs =
-            document.querySelectorAll("input[type='date']");
+        const textInput = document.getElementById(`renderDate${index}`);
+        const pickerInput = document.getElementById(`renderDatePicker${index}`);
 
-        inputs[index].value = today;
+        if (textInput) textInput.value = today;
+        if (pickerInput) pickerInput.value = today;
 
     } else {
 
         error.style.display = "none";
+
+        const pickerInput = document.getElementById(`renderDatePicker${index}`);
+        if (pickerInput && isCompleteDate) pickerInput.value = value;
 
     }
 
