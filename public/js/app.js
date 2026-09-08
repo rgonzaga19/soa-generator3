@@ -205,7 +205,7 @@ async function checkForUpdates(showLatestMessage = false) {
 
 
 // ── License settings ─────────────────────────────────────────────
-const LICENSE_VALIDATION_URL = "https://soa-generator-license.gonzagaromel19.workers.dev";
+const LICENSE_VALIDATION_URL = "https://new-hope-soa-excelgenerator.gonzagaromel19.workers.dev";
 const LICENSE_REQUEST_TIMEOUT_MS = 10000; // matches the Python client's timeout=10
 
 // ── Release log (full version history, shown in the About modal) ────────
