@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOA Excel Generator</title>
+    <link rel="icon" type="image/x-icon" href="/images/logo.ico">
+
+    <!--
+        Applies the saved (or system-default) theme before the stylesheet
+        paints, so there's no flash of the light theme on load. Runs
+        synchronously and only touches the <html> attribute — no DOM
+        elements need to exist yet.
+    -->
+    <script>
+        (function () {
+            try {
+                var saved = localStorage.getItem("soaTheme");
+                var theme = saved
+                    || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+                        ? "dark"
+                        : "light");
+                document.documentElement.setAttribute("data-theme", theme);
+            } catch (e) {
+                // localStorage/matchMedia unavailable — default to light.
+            }
+        })();
+    </script>
+
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+<!-- Sticky header -->
+<header class="header">
+
+    <div class="header-left">
+        <div class="logo-title">
+            <img
+                src="/images/logo.svg"
+                alt="SOA Generator Logo"
+                class="logo"
+            >
+            <div class="title-text">
+                <h1>SOA Excel Generator</h1>
+                <p>PhilHealth Statement of Account Generator</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="header-right">
+
+        <div class="version-status-pill">
+            <span class="version-num" id="versionBadge">Loading...</span>
+            <button
+                id="updateStatusBadge"
+                class="status-segment"
+                type="button"
+                style="display:none;"
+                title="Click for details"
+            ></button>
+        </div>
+
+        <div class="header-divider"></div>
+
+        <button id="themeToggleBtn" class="theme-toggle-btn" title="Toggle dark mode">🌙 Dark</button>
+        <button id="settingsBtn" class="about-btn" title="License settings">⚙ Settings</button>
+        <button id="aboutBtn" class="about-btn">About</button>
+    </div>
+
+</header>
+
+<div class="container">
+
+    <div class="dashboard">
+
+        <!-- LEFT PANEL — the only section that scrolls with the page -->
+        <div class="left-panel">
+
+            <!-- Batch Generate — upload an Excel file with one row per
+                 person, loop /generate for each row, and zip the results.
+                 Fully client-side (SheetJS + JSZip); no server changes. -->
+            <div class="card">
+                <h2>Batch Generate</h2>
+
+                <p class="batch-hint">
+                    Upload an Excel file with one row per person to generate
+                    multiple SOAs in one go, packaged into a single .zip.
+                </p>
+
+                <div class="field">
+                    <label>Default Claim Period</label>
+                    <div class="batch-period-row">
+                        <select id="batchClaimMonth"></select>
+                        <input type="number" id="batchClaimYear" min="2020" max="2100">
+                    </div>
+                    <small class="batch-hint-inline">
+                        Fills in the month/year when a date in the file
+                        doesn't state one — e.g. a bare day list like
+                        "28,30", or any date missing its year.
+                    </small>
+                </div>
+
+                <div class="field">
+                    <label>Batch Excel File</label>
+                    <input type="file" id="batchFileInput" accept=".xlsx,.xls">
+                    <small id="batchFileError" class="field-error">Unable to read this file. Please use the template.</small>
+                </div>
+
+                <div id="batchPreview" class="batch-preview" style="display:none;"></div>
+
+                <div class="batch-actions">
+                    <button id="downloadTemplateBtn" type="button" class="secondary-btn">⬇ Download Template</button>
+                    <button id="batchGenerateBtn" type="button" class="batch-generate-btn" disabled>📦 Generate Batch (ZIP)</button>
+                </div>
+
+                <div id="batchProgress" class="batch-progress" style="display:none;">
+                    <div class="batch-progress-track">
+                        <div id="batchProgressFill" class="batch-progress-fill"></div>
+                    </div>
+                    <small id="batchProgressText">0 / 0</small>
+                </div>
+
+                <div id="batchLog" class="batch-log" style="display:none;"></div>
+            </div>
+
+            <div class="card">
+                <h2>General Settings</h2>
+
+                <div class="field">
+                    <label>Access Type</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="accessType" value="fistula" checked>
+                            Fistula
+                        </label>
+                        <label>
+                            <input type="radio" name="accessType" value="subkit">
+                            Subkit
+                        </label>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Dialyzer Type</label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="fluxType" value="high" checked>
+                            High Flux
+                        </label>
+                        <label>
+                            <input type="radio" name="fluxType" value="low">
+                            Low Flux
+                        </label>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Number of Claims</label>
+                    <input
+                        id="claimCount"
+                        type="number"
+                        min="1"
+                        max="7"
+                        maxlength="2"
+                        value="1"
+                        oninput="if(this.value.length > 2) this.value = this.value.slice(0,2)"
+                    >
+                    <small id="claimCountError">Maximum of 7 claims.</small>
+                </div>
+            </div>
+
+            <!--
+                app.js should render each claim card like:
+                <div class="claim-card">
+                  <h3><span class="claim-num">1</span> Claim #1</h3>
+                  <div class="claim-grid">
+                    <div>
+                      <label>Render Date</label>
+                      <input type="date" ...>
+                    </div>
+                    ...
+                  </div>
+                </div>
+                The .claim-num span gets the blue circle badge automatically via CSS.
+                Date inputs do NOT need a wrapper div — the calendar icon comes from CSS background-image.
+            -->
+            <div id="claimsContainer"></div>
+
+        </div>
+
+        <!-- RIGHT PANEL — sticky: status, summary, and actions stay in view -->
+        <aside class="right-panel">
+
+            <div class="status-bar">
+                <span id="systemStatus">🟢 System Ready</span>
+            </div>
+
+            <div class="card">
+                <h2>Summary</h2>
+                <div id="summary"></div>
+            </div>
+
+            <div class="generate-area">
+                <button id="clearBtn" class="secondary-btn">Clear Form</button>
+                <button id="generateBtn">Generate Excel</button>
+            </div>
+
+        </aside>
+
+    </div>
+
+</div>
+
+<!-- About Modal -->
+<div id="aboutModal" class="modal">
+    <div class="modal-content about-modal-content">
+
+        <span id="closeAbout" class="close-btn">&times;</span>
+
+        <div class="about-modal-scroll">
+
+            <!-- Header -->
+            <div class="about-header">
+                <div class="about-icon">🏥</div>
+                <div>
+                    <h2>SOA Excel Generator</h2>
+                    <p class="about-tagline">Internal PhilHealth Statement of Account Generator</p>
+                </div>
+            </div>
+
+            <!-- What this app is for -->
+            <p class="about-description">
+                Built to speed up the creation of PhilHealth Statements of Account (SOA) —
+                the Excel file used specifically for uploading to Beacon and later
+                generating the SOA XML. It replaces the manual, repetitive, and
+                time-consuming work of building these spreadsheets by hand, turning
+                claim details into a ready-to-upload file in seconds.
+            </p>
+
+            <!-- Version info -->
+            <div class="version-panel">
+                <div class="version-row">
+                    <span class="version-label">Current Version</span>
+                    <span class="version-value" id="aboutVersion">Loading...</span>
+                </div>
+                <div class="version-row">
+                    <span class="version-label">Latest Version</span>
+                    <span class="version-value" id="latestVersion">Checking...</span>
+                </div>
+                <div id="updateStatus" class="update-status-row">
+                    Checking for updates...
+                </div>
+            </div>
+
+            <!-- Release notes (what's new in the pending update, if any) -->
+            <div id="releaseNotesContainer" class="release-notes-box" style="display:none;">
+                <h3>Release Notes</h3>
+                <ul id="releaseNotes"></ul>
+            </div>
+
+            <!-- Update actions -->
+            <div class="about-actions">
+
+                <button
+                    id="checkUpdateBtn"
+                    class="btn btn-secondary">
+                    🔄 Check for Updates
+                </button>
+
+                <button
+                    id="downloadUpdateBtn"
+                    class="btn btn-primary"
+                    style="display:none;">
+                    ⬇ Download Update
+                </button>
+
+            </div>
+
+            <!-- Release log (full version history) -->
+            <div class="release-log-box">
+                <h3>Release Log</h3>
+                <div id="releaseLog" class="release-log-list">
+                    <p class="release-log-empty">Loading release history…</p>
+                </div>
+            </div>
+
+            <div class="about-divider"></div>
+
+            <!-- App meta -->
+            <div class="about-meta">
+                <div class="meta-row">
+                    <span class="meta-label">Other Tools</span>
+                    <a
+                        href="https://rgonzaga19.github.io/pdfsplitter/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="tool-link"
+                    >
+                        📄 PDF Splitter
+                    </a>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Developer</span>
+                    <span class="meta-value">Romel Gonzaga</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Built With</span>
+                    <span class="meta-value">Node.js, Express, ExcelJS</span>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+<!-- Settings Modal (license key) -->
+<div id="settingsModal" class="modal">
+    <div class="modal-content">
+
+        <span id="closeSettings" class="close-btn">&times;</span>
+
+        <h2>⚙ Settings</h2>
+
+        <p>Enter the license key issued for this installation. It's checked against our license server whenever you generate a Statement of Account.</p>
+
+        <div class="field">
+            <label for="licenseKeyInput">License Key</label>
+            <input
+                id="licenseKeyInput"
+                type="password"
+                placeholder="Enter your license key"
+                autocomplete="off"
+            >
+            <small id="licenseError" class="field-error">Please enter a valid license key.</small>
+        </div>
+
+        <p id="licenseStatus" class="license-status">No license key saved yet.</p>
+
+        <div class="settings-actions">
+            <button id="saveLicenseBtn" class="save-license-btn">💾 Save Key</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="footer">
+    <div>© 2026 SOA Excel Generator</div>
+    <div id="footerVersion">
+        Version Loading...
+    </div>
+    <div>Developed by Romel Gonzaga</div>
+</footer>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+    <div class="loading-box">
+        <div class="spinner"></div>
+        <p id="loadingText">Generating Excel...</p>
+        <small>Please wait a few seconds.</small>
+    </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- SheetJS (reads the batch .xlsx) and JSZip (packages generated SOAs into
+     a .zip). ExcelJS builds the downloadable template — unlike SheetJS's
+     free build, it can write real cell styling (bold, fill, borders,
+     wrap text), which is what makes the template readable out of the box. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+
+<script src="/js/app.js"></script>
+
+</body>
+</html>

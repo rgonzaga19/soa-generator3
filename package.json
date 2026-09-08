@@ -1,0 +1,47 @@
+{
+  "name": "soa-excelgenerator",
+  "version": "2.0.5",
+  "description": "SOA Excel Generator",
+  "author": "Romel",
+
+  "main": "electron-main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "dist": "electron-builder"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "exceljs": "^4.4.0",
+    "express": "^5.2.1",
+    "multer": "^2.1.1"
+  },
+  "devDependencies": {
+    "electron": "^42.4.1",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.soagenerator.app",
+    "productName": "SOA Excel Generator",
+
+    "files": [
+      "**/*"
+    ],
+
+    "extraResources": [
+      {
+        "from": "templates",
+        "to": "templates"
+      }
+    ],
+
+    "win": {
+      "target": "nsis",
+      "icon": "public/images/logo.ico"
+    },
+
+    "directories": {
+      "output": "release"
+    }
+  }
+}
