@@ -169,3 +169,24 @@ A new installer will be generated inside the `dist` folder.
 - Always test generated workbooks before releasing a new version.
 - Exclude `node_modules` from version control.
 - Commit business rule changes separately for easier maintenance.
+
+## New SOA item format
+
+Item descriptions, prices, and PhilHealth mappings in `services/soaCatalog.json`
+were transcribed from `NEW FORMAT SOA 3 CLAIMS.xlsx`. Generation preserves the
+existing workbook columns and fills one block per claim.
+
+Each claim selects New or Re-use Highflux Dialyzer and selects
+one EPO type (Alfa, Beta, or None), with None as the manual form default.
+Iron Sucrose is selected independently. Batch Alfa and Beta dates must not overlap. All exported quantities are 1.
+Sodium Chloride and Heparin are always included, along with the sample's eight
+machine/supply rows. Laboratory adds the sample's ten laboratory rows.
+Iron Sucrose's PhilHealth mapping remains blank, as in the supplied sample.
+There is no fixed-total room-and-board adjustment in this format.
+
+Use the updated downloadable batch template. Medicine and laboratory columns
+contain day lists; RE-USE DATES identifies treatments using a reused dialyzer.
+All other treatment dates use New. The previous access, flux, and dose-quantity
+fields are no longer used.
+
+Run `npm test` for item-selection, workbook, input-validation, and frontend-state checks.

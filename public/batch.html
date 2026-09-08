@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOA Excel Generator</title>
+    <title>Batch Generate - SOA Excel Generator</title>
     <link rel="icon" type="image/x-icon" href="/images/logo.ico">
 
     <!--
@@ -36,8 +36,8 @@
     <a class="sidebar-brand" href="/"><img src="/images/logo.svg" alt=""><span>SOA Studio<small>Statement of Account</small></span></a>
     <p class="nav-caption">WORKSPACE</p>
     <nav aria-label="Main navigation">
-        <a href="/" data-view="individual" aria-current="page"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>Individual Claims</a>
-        <a href="/batch.html" data-view="batch"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Batch Generate</a>
+        <a href="/" data-view="individual"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>Individual Claims</a>
+        <a href="/batch.html" data-view="batch" aria-current="page"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Batch Generate</a>
         <button id="settingsBtn" data-view="settings" type="button"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3"/><circle cx="15" cy="17" r="3"/></svg>Settings</button>
         <button id="aboutBtn" data-view="about" type="button"><svg class="nav-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7v1"/></svg>About</button>
     </nav>
@@ -55,7 +55,7 @@
                 class="logo"
             >
             <div class="title-text">
-                <h1 id="pageTitle">Individual Claims</h1>
+                <h1 id="pageTitle">Batch Generate</h1>
                 <p>Prepare accurate statements with a simpler workflow.</p>
             </div>
         </div>
@@ -87,69 +87,52 @@
 
 
 
-    <div class="dashboard">
-
-        <!-- LEFT PANEL — the only section that scrolls with the page -->
-        <div class="left-panel">
-
+    <main class="batch-page">
             <div class="card">
-                <h2>General Settings</h2>
+                <h2>Batch Generate</h2>
+
+                <p class="batch-hint">
+                    Upload an Excel file with one row per person to generate
+                    multiple SOAs in one go, packaged into a single .zip.
+                </p>
 
                 <div class="field">
-                    <label>Number of Claims</label>
-                    <input
-                        id="claimCount"
-                        type="number"
-                        min="1"
-                        max="7"
-                        maxlength="2"
-                        value="1"
-                        oninput="if(this.value.length > 2) this.value = this.value.slice(0,2)"
-                    >
-                    <small id="claimCountError">Maximum of 7 claims.</small>
-                </div>
-            </div>
-
-            <!--
-                app.js should render each claim card like:
-                <div class="claim-card">
-                  <h3><span class="claim-num">1</span> Claim #1</h3>
-                  <div class="claim-grid">
-                    <div>
-                      <label>Render Date</label>
-                      <input type="date" ...>
+                    <label>Default Claim Period</label>
+                    <div class="batch-period-row">
+                        <select id="batchClaimMonth"></select>
+                        <input type="number" id="batchClaimYear" min="2020" max="2100">
                     </div>
-                    ...
-                  </div>
+                    <small class="batch-hint-inline">
+                        Fills in the month/year when a date in the file
+                        doesn't state one — e.g. a bare day list like
+                        "28,30", or any date missing its year.
+                    </small>
                 </div>
-                The .claim-num span gets the blue circle badge automatically via CSS.
-                Date inputs do NOT need a wrapper div — the calendar icon comes from CSS background-image.
-            -->
-            <div id="claimsContainer"></div>
 
-        </div>
+                <div class="field">
+                    <label>Batch Excel File</label>
+                    <input type="file" id="batchFileInput" accept=".xlsx,.xls">
+                    <small id="batchFileError" class="field-error">Unable to read this file. Please use the template.</small>
+                </div>
 
-        <!-- RIGHT PANEL — sticky: status, summary, and actions stay in view -->
-        <aside class="right-panel">
+                <div id="batchPreview" class="batch-preview" style="display:none;"></div>
 
-            <div class="status-bar">
-                <span id="systemStatus">🟢 System Ready</span>
+                <div class="batch-actions">
+                    <button id="downloadTemplateBtn" type="button" class="secondary-btn">Download template</button>
+                    <button id="batchGenerateBtn" type="button" class="batch-generate-btn" disabled>Generate batch ZIP</button>
+                </div>
+
+                <div id="batchProgress" class="batch-progress" style="display:none;">
+                    <div class="batch-progress-track">
+                        <div id="batchProgressFill" class="batch-progress-fill"></div>
+                    </div>
+                    <small id="batchProgressText">0 / 0</small>
+                </div>
+
+                <div id="batchLog" class="batch-log" style="display:none;"></div>
             </div>
 
-            <div class="card">
-                <h2>Summary</h2>
-                <div id="summary"></div>
-            </div>
-
-            <div class="generate-area">
-                <button id="clearBtn" class="secondary-btn">Clear Form</button>
-                <button id="generateBtn">Generate Excel</button>
-            </div>
-
-        </aside>
-
-    </div>
-
+    </main>
 </div>
 
 <!-- About Modal -->
@@ -273,6 +256,14 @@
 
 <!-- Toast -->
 <div id="toast" class="toast"></div>
+
+<!-- SheetJS (reads the batch .xlsx) and JSZip (packages generated SOAs into
+     a .zip). ExcelJS builds the downloadable template — unlike SheetJS's
+     free build, it can write real cell styling (bold, fill, borders,
+     wrap text), which is what makes the template readable out of the box. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 
 <script src="/js/app.js"></script>
 

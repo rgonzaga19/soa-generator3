@@ -1,20 +1,9 @@
-const appState = {
+function newClaim() {
+    return { renderDate: "", epoType: "none",
+        hasIronSucrose: false, dialyzerType: "new", hasLab: false };
+}
 
-    accessType: "fistula",
-
-    fluxType: "high",
-
-    claims: [
-        {
-            renderDate: "",
-            hasEpo: false,
-            epoQty: 1,
-            epoType: "alfa",
-            hasLab: false
-        }
-    ]
-
-};
+const appState = { claims: [newClaim()] };
 
 // ── Update information ────────────────────────────────────────────────
 let currentVersion = "";
@@ -290,178 +279,59 @@ const claimsContainer = document.getElementById("claimsContainer");
 const summary = document.getElementById("summary");
 
 function renderClaims() {
-
-    claimsContainer.innerHTML = "";
+    if (!claimsContainer) return;
     const today = new Date().toISOString().split("T")[0];
-
-    appState.claims.forEach((claim, index) => {
-
-        claimsContainer.innerHTML += `
-
+    claimsContainer.innerHTML = appState.claims.map((claim, index) => `
         <div class="claim-card">
-
             <h3>Claim #${index + 1}</h3>
-
             <div class="claim-grid">
-
                 <div>
-
-                    <label>Render Date</label>
-
-                    <input
-                        type="date"
-                        value="${claim.renderDate}"
-                        min="2020-01-01"
-                        max="${today}"
-                        onchange="updateDate(${index}, this.value)"
-                    >
-
-                    <small
-                        id="dateError${index}"
-                        style="color:red; display:none;"
-                    >
-                        Date cannot be in the future.
-                    </small>
-
+                    <label for="renderDate${index}">Render Date</label>
+                    <input id="renderDate${index}" type="date" value="${claim.renderDate}"
+                        min="2020-01-01" max="${today}" onchange="updateDate(${index}, this.value)">
+                    <small id="dateError${index}" style="color:red; display:none;">Date cannot be in the future.</small>
                 </div>
-
                 <div>
-
-                    <label>Has EPO</label>
-
-                    <label class="checkbox-field checkbox-field--epo">
-                        <input
-                            type="checkbox"
-                            ${claim.hasEpo ? "checked" : ""}
-                            onchange="toggleEpo(${index},this.checked)"
-                        >
-                        <span>${claim.hasEpo ? "Yes" : "No"}</span>
-                    </label>
-
-                </div>
-
-                <div>
-
-                    <label>Include Laboratory</label>
-
-                    <label class="checkbox-field checkbox-field--lab">
-                        <input
-                            type="checkbox"
-                            ${claim.hasLab ? "checked" : ""}
-                            onchange="toggleLab(${index})"
-                        >
-                        <span>${claim.hasLab ? "Yes" : "No"}</span>
-                    </label>
-
-                </div>
-
-                <div>
-
-                    <label>EPO Type</label>
-
-                    <select
-                            class="epo-field"
-                            ${claim.hasEpo ? "" : "disabled"}
-                            onchange="updateEpoType(${index},this.value)"
-                        >
-
-                        <option
-                            value="alfa"
-                            ${claim.epoType === "alfa" ? "selected" : ""}
-                        >
-                            Alfa
-                        </option>
-
-                        <option
-                            value="beta"
-                            ${claim.epoType === "beta" ? "selected" : ""}
-                        >
-                            Beta
-                        </option>
-
+                    <label for="dialyzer${index}">Highflux Dialyzer</label>
+                    <select id="dialyzer${index}" onchange="updateClaimOption(${index}, 'dialyzerType', this.value)">
+                        <option value="new" ${claim.dialyzerType === "new" ? "selected" : ""}>New</option>
+                        <option value="reuse" ${claim.dialyzerType === "reuse" ? "selected" : ""}>Re-use</option>
                     </select>
-
                 </div>
-
                 <div>
-
-                    <label>EPO Quantity</label>
-
-                    <input
-                        class="epo-field epo-field--qty"
-                        type="number"
-                        min="1"
-                        max="${claim.epoType === "beta" ? 1 : 2}"
-                        value="${claim.epoQty}"
-                        ${claim.hasEpo ? "" : "disabled"}
-                        oninput="updateEpoQty(${index}, this)"
-                    >
-                    <small
-                        id="epoQtyError${index}"
-                        style="color:red; display:none;"
-                    >
-                        ${claim.epoType === "beta" ? "Beta does not support double dose." : "Maximum quantity is 2."}
-                    </small>
-
+                    <label for="epoType${index}">EPO Type</label>
+                    <select id="epoType${index}" onchange="updateClaimOption(${index}, 'epoType', this.value)">
+                        <option value="alfa" ${claim.epoType === "alfa" ? "selected" : ""}>EPOETIN ALFA</option>
+                        <option value="beta" ${claim.epoType === "beta" ? "selected" : ""}>EPOETIN BETA</option>
+                        <option value="none" ${claim.epoType === "none" ? "selected" : ""}>None</option>
+                    </select>
                 </div>
-
+                ${[["hasIronSucrose", "Iron Sucrose"], ["hasLab", "Include Laboratory"]].map(([key,label]) => `
+                    <div><label class="checkbox-field">
+                        <input type="checkbox" ${claim[key] ? "checked" : ""}
+                            onchange="${key === "hasLab" ? `toggleLab(${index})` : `updateClaimOption(${index}, '${key}', this.checked)`}">
+                        <span>${label}</span>
+                    </label></div>`).join("")}
             </div>
-
-        </div>
-
-        `;
-
-    });
-
+        </div>`).join("");
     renderSummary();
-
 }
 
-function renderSummary(){
+function updateClaimOption(index, key, value) {
+    appState.claims[index][key] = value;
+    renderSummary();
+}
 
-    let html = "";
-
-    html += `<div class="summary-item"><b>Access:</b> ${appState.accessType}</div>`;
-    html += `<div class="summary-item"><b>Dialyzer:</b> ${appState.fluxType}</div>`;
-
-    html += `<div class="summary-item"><b>Claims:</b> ${appState.claims.length}</div>`;
-
-    const labIndex =
-        appState.claims.findIndex(c=>c.hasLab);
-
-    html += `<div class="summary-item"><b>Laboratory:</b> ${
-        labIndex==-1 ? "None" : "Claim #"+(labIndex+1)
-    }</div>`;
-
-    html += "<hr><br>";
-
-    appState.claims.forEach((c,i)=>{
-
-        html+=`
-        <div class="summary-item">
-
-        <b>Claim ${i+1}</b><br>
-
-        Date:
-        ${c.renderDate || "-"}
-
-        <br>
-        EPO:
-        ${
-            c.hasEpo
-                ? `${c.epoType.toUpperCase()} x${c.epoQty}`
-                : "None"
-        }
-
-        ${c.hasLab ? "<br>LAB ✓" : ""}
-
-        </div>
-        `;
-
-    });
-
-    summary.innerHTML=html;
-
+function renderSummary() {
+    summary.innerHTML = `<div class="summary-item"><b>Claims:</b> ${appState.claims.length}</div>` +
+        appState.claims.map((c,i) => `<div class="summary-item claim-summary-item">
+            <b>Claim ${i + 1}</b><div class="claim-summary-details">Date: ${c.renderDate || "-"}<br>
+            Highflux Dialyzer: ${c.dialyzerType === "reuse" ? "Re-use" : "New"}<br>
+            Medicines: ${[c.epoType === "alfa" && "EPOETIN ALFA", c.epoType === "beta" && "EPOETIN BETA",
+                c.hasIronSucrose && "Iron Sucrose"].filter(Boolean).join(", ") || "None selected"}
+            ${c.hasLab ? "<br>Laboratory included" : ""}
+            </div>
+        </div>`).join("");
 }
 
 function updateDate(index, value) {
@@ -495,72 +365,6 @@ function updateDate(index, value) {
 
 }
 
-function toggleEpo(index, value){
-
-    appState.claims[index].hasEpo = value;
-
-    if (!value) {
-        appState.claims[index].epoQty = 1;
-        appState.claims[index].epoType = "alfa";
-    }
-
-    renderClaims();
-
-}
-
-function updateEpoQty(index, input) {
-
-    const claim = appState.claims[index];
-    const maxQty = claim.epoType === "beta" ? 1 : 2;
-
-    // Only allow 1 digit, same as the old validateEpoQty behavior.
-    if (input.value.length > 1) {
-        input.value = input.value.slice(0, 1);
-    }
-
-    let value = parseInt(input.value);
-    const wentOverMax = value > maxQty;
-
-    if (isNaN(value) || value < 1) {
-        value = 1;
-    }
-
-    if (value > maxQty) {
-        value = maxQty;
-    }
-
-    // Commit to state immediately (on every keystroke), so the value
-    // submitted with the form always matches what's shown in the field —
-    // it no longer depends on the field losing focus first.
-    claim.epoQty = value;
-    input.value = value;
-
-    const error = document.getElementById(`epoQtyError${index}`);
-    if (error) {
-        error.style.display = wentOverMax ? "block" : "none";
-    }
-
-    renderSummary();
-
-}
-
-function updateEpoType(index,value){
-
-    const claim = appState.claims[index];
-
-    claim.epoType = value;
-
-    // Beta does not support double dose — clamp back to 1 if needed.
-    if (value === "beta" && claim.epoQty > 1) {
-        claim.epoQty = 1;
-    }
-
-    // Re-render so the quantity field's max attribute and error text
-    // (which depend on epoType) reflect the new selection.
-    renderClaims();
-
-}
-
 function toggleLab(index) {
 
     // If already checked, uncheck it
@@ -583,7 +387,7 @@ function toggleLab(index) {
 
 document
 .getElementById("claimCount")
-.addEventListener("change",(e)=>{
+?.addEventListener("change",(e)=>{
 
     let count = parseInt(e.target.value);
 
@@ -617,15 +421,7 @@ document
 
     while(appState.claims.length<count){
 
-        appState.claims.push({
-
-            renderDate:"",
-            hasEpo:false,
-            epoQty:1,
-            epoType:"alfa",
-            hasLab:false
-
-        });
+        appState.claims.push(newClaim());
     }
 
     while(appState.claims.length>count){
@@ -638,33 +434,6 @@ document
 
 });
 
-document
-.querySelectorAll("input[name='accessType']")
-.forEach(r=>{
-
-    r.addEventListener("change",(e)=>{
-
-        appState.accessType=e.target.value;
-
-        renderSummary();
-
-    });
-
-});
-
-document
-.querySelectorAll("input[name='fluxType']")
-.forEach(r => {
-
-    r.addEventListener("change", (e) => {
-
-        appState.fluxType = e.target.value;
-
-        renderSummary();
-
-    });
-
-});
 
 renderClaims();
 
@@ -683,6 +452,7 @@ function getCurrentTheme() {
 }
 
 function applyTheme(theme) {
+    syncThemeChoicesAfterApply(theme);
 
     document.documentElement.setAttribute("data-theme", theme);
 
@@ -695,10 +465,20 @@ function applyTheme(theme) {
     const btn = document.getElementById("themeToggleBtn");
 
     if (btn) {
-        btn.textContent = theme === "dark" ? "☀ Light" : "🌙 Dark";
+        btn.setAttribute("aria-checked", String(theme === "dark"));
     }
 
 }
+
+function syncThemeChoicesAfterApply(theme) {
+    document.querySelectorAll("[data-theme-choice]").forEach(button => {
+        button.setAttribute("aria-pressed", String(button.dataset.themeChoice === theme));
+    });
+}
+
+document.querySelectorAll("[data-theme-choice]").forEach(button => {
+    button.addEventListener("click", () => applyTheme(button.dataset.themeChoice));
+});
 
 function toggleTheme() {
     applyTheme(getCurrentTheme() === "dark" ? "light" : "dark");
@@ -796,6 +576,22 @@ async function updateLicenseStatusText() {
 
 }
 
+// Settings and About use the same workspace area as the generator.
+function showWorkspaceView(view) {
+    document.querySelector(".container").hidden = !!view;
+    for (const name of ["settings", "about"]) {
+        document.getElementById(`${name}Modal`).style.display = name === view ? "block" : "none";
+    }
+    const home = document.getElementById("batchFileInput") ? "batch" : "individual";
+    document.querySelectorAll("[data-view]").forEach(item => {
+        if (item.dataset.view === (view || home)) item.setAttribute("aria-current", "page");
+        else item.removeAttribute("aria-current");
+    });
+    document.getElementById("pageTitle").textContent = view === "settings" ? "Settings" :
+        view === "about" ? "About" : home === "batch" ? "Batch Generate" : "Individual Claims";
+    window.scrollTo(0, 0);
+}
+
 async function openSettingsModal() {
 
     const modal = document.getElementById("settingsModal");
@@ -806,7 +602,7 @@ async function openSettingsModal() {
     // Show the modal immediately rather than waiting on the file read —
     // it's a fast local read, but there's no reason to make the modal's
     // appearance depend on it.
-    modal.style.display = "block";
+    showWorkspaceView("settings");
 
     input.value = await getSavedLicenseKey();
 
@@ -815,7 +611,7 @@ async function openSettingsModal() {
 }
 
 function closeSettingsModal() {
-    document.getElementById("settingsModal").style.display = "none";
+    showWorkspaceView(null);
 }
 
 // Calls the Cloudflare license server. Matches worker.js exactly:
@@ -1150,47 +946,10 @@ async function generateExcel() {
 }
 
 function clearForm() {
-
-    // Reset access type
-    appState.accessType = "fistula";
-
-    // Reset flux type (if you've already added it)
-    if ("fluxType" in appState) {
-        appState.fluxType = "high";
-    }
-
-    // Reset claims
-    appState.claims = [
-        {
-            renderDate: "",
-            hasEpo: false,
-            epoQty: 1,
-            epoType: "alfa",
-            hasLab: false
-        }
-    ];
-
-    // Reset Number of Claims input
+    appState.claims = [newClaim()];
     document.getElementById("claimCount").value = 1;
-
-    // Reset radio buttons
-    document.querySelector(
-        "input[name='accessType'][value='fistula']"
-    ).checked = true;
-
-    // Reset flux radio buttons if present
-    const highFlux = document.querySelector(
-        "input[name='fluxType'][value='high']"
-    );
-
-    if (highFlux) {
-        highFlux.checked = true;
-    }
-
     renderClaims();
-
     clearBatchSection();
-
 }
 
 const aboutBtn = document.getElementById("aboutBtn");
@@ -1201,7 +960,7 @@ if (aboutBtn && aboutModal && closeAbout) {
 
     aboutBtn.onclick = async () => {
 
-        aboutModal.style.display = "block";
+        showWorkspaceView("about");
 
         document.getElementById("latestVersion").textContent = "Checking...";
         document.getElementById("updateStatus").textContent =
@@ -1231,12 +990,12 @@ if (aboutBtn && aboutModal && closeAbout) {
     }
 
     closeAbout.onclick = () => {
-        aboutModal.style.display = "none";
+        showWorkspaceView(null);
     };
 
     window.onclick = (e) => {
         if (e.target === aboutModal) {
-            aboutModal.style.display = "none";
+            showWorkspaceView(null);
         }
         if (e.target === document.getElementById("settingsModal")) {
             closeSettingsModal();
@@ -1267,11 +1026,11 @@ function showToast(message, type = "info") {
 
 document
     .getElementById("generateBtn")
-    .addEventListener("click", generateExcel);
+    ?.addEventListener("click", generateExcel);
 
 document
     .getElementById("clearBtn")
-    .addEventListener("click", clearForm);
+    ?.addEventListener("click", clearForm);
 
 document
     .getElementById("checkUpdateBtn")
@@ -1469,8 +1228,8 @@ const BATCH_HEADERS = {
     CLAIM_COUNT: "NO OF CLAIMS",
     EPO_ALFA: "DATES OF ERYTHROPOIETIN GIVEN WEEKLY",
     EPO_BETA: "BETA RECORMON",
-    ACCESS: "DIALYZER CATEGORY",
-    FLUX: "KIT CATEGORY",
+    REUSE: "RE USE DATES",
+    IRON: "IRON SUCROSE",
     LAB: "W LAB"
 };
 
@@ -1621,83 +1380,7 @@ function parseTreatmentDatesCell(value, defaultMonth, defaultYear) {
 
 }
 
-// Reads a "day marker" cell (Erythropoietin dates, Beta Recormon): a bare
-// day number (qty 1), "day(N)"/"dayxN"/"day*N" for an explicit quantity,
-// the same day repeated (each occurrence adds 1) — e.g. "27(2),31" or
-// "27,27,31,31" — or a day range ("27-29") which applies the same
-// quantity to every day in the range. Separators can be commas,
-// semicolons, slashes, whitespace, or newlines, and ordinal suffixes
-// ("27th") are accepted. Returns a Map<day, quantity>.
-function parseDayQtyListCell(value) {
-
-    const result = new Map();
-
-    if (value === undefined || value === null || value === "") return result;
-
-    const addDay = (day, qty) => {
-        if (day < 1 || day > 31) return;
-        result.set(day, (result.get(day) || 0) + qty);
-    };
-
-    if (value instanceof Date && !isNaN(value)) {
-        addDay(value.getDate(), 1);
-        return result;
-    }
-
-    if (typeof value === "number" && isFinite(value)) {
-        if (value >= 1 && value <= 31) {
-            addDay(Math.round(value), 1);
-        } else {
-            const d = excelSerialToDate(value);
-            if (d) addDay(d.getUTCDate(), 1);
-        }
-        return result;
-    }
-
-    const text = String(value).trim();
-    if (!text || /^(no|none|n\/a|-)$/i.test(text)) return result;
-
-    // Collapse whitespace around x/*/()  ("27 x 2" -> "27x2") before
-    // tokenizing, since whitespace is otherwise also a separator between
-    // distinct day entries and would split "27 x 2" into three tokens.
-    const normalized = stripOrdinals(text).replace(/\s*([x*()])\s*/gi, "$1");
-
-    splitDayTokens(normalized).forEach(token => {
-
-        // Day range, optionally with a shared quantity — "27-29" or
-        // "27-29(2)" / "27-29x2" applies the same quantity to every day.
-        const rangeMatch = token.match(/^(\d{1,2})-(\d{1,2})(?:\s*[x*(]\s*(\d+)\)?)?$/i);
-        if (rangeMatch) {
-            const start = parseInt(rangeMatch[1], 10);
-            const end = parseInt(rangeMatch[2], 10);
-            const qty = rangeMatch[3] ? parseInt(rangeMatch[3], 10) : 1;
-            if (start >= 1 && end <= 31 && start <= end) {
-                for (let d = start; d <= end; d++) addDay(d, qty);
-            }
-            return;
-        }
-
-        // Single day, optionally with a quantity — "27(2)", "27x2",
-        // "27 x 2", "27*2".
-        const m = token.match(/^(\d{1,2})(?:\s*[x*(]\s*(\d+)\)?)?$/i);
-        if (!m) return;
-
-        const day = parseInt(m[1], 10);
-        const qty = m[2] ? parseInt(m[2], 10) : 1;
-
-        addDay(day, qty);
-
-    });
-
-    return result;
-
-}
-
-// Reads a "day marker" cell with no quantity concept (W/ Lab): a bare day
-// number, a day range ("27-29"), a list of days (comma/semicolon/slash/
-// whitespace-separated, ordinal suffixes accepted), or "NO"/blank meaning
-// none. Returns a Set of day-of-month integers to match against the
-// row's treatment days.
+// Reads selected treatment days; quantities are fixed at one.
 function parseDayListCell(value) {
 
     if (value === undefined || value === null || value === "") return new Set();
@@ -1717,103 +1400,42 @@ function parseDayListCell(value) {
 
 }
 
-// Converts one raw spreadsheet row into { name, state, warnings }, where
-// state is the same { accessType, fluxType, claims[] } shape generateExcel()
-// already posts to /generate. Each treatment day becomes one claim; a day
-// that also appears in the Erythropoietin/Beta/W-Lab columns picks up
-// hasEpo/epoType/hasLab for that specific claim. A marker day that doesn't
-// match any treatment date is simply unused — there's no claim to attach it to.
+// One patient per row; medicine, reuse, and laboratory columns contain treatment days.
 function rowToBatchEntry(rawRow, defaultMonth, defaultYear) {
-
     const row = normalizeRowKeys(rawRow);
     const warnings = [];
-
     const name = String(row[BATCH_HEADERS.NAME] || "").trim();
-
-    const accessType =
-        String(row[BATCH_HEADERS.ACCESS] || "").trim().toLowerCase() === "subkit"
-            ? "subkit"
-            : "fistula";
-
-    const fluxRaw = String(row[BATCH_HEADERS.FLUX] || "").trim().toLowerCase();
-    const fluxType = fluxRaw === "low" || fluxRaw === "low flux" ? "low" : "high";
-
     const treatment = parseTreatmentDatesCell(row[BATCH_HEADERS.TREATMENT_DATES], defaultMonth, defaultYear);
-
     if (!treatment || !treatment.days.length) {
-        return {
-            name,
-            state: { accessType, fluxType, claims: [] },
-            warnings: ["Could not read Treatment Dates for this row."]
-        };
+        return { name, state: { claims: [] }, warnings: ["Could not read Treatment Dates for this row."] };
     }
-
-    let days = treatment.days;
-
-    if (days.length > CLAIM_COLUMNS_PER_ROW) {
-        warnings.push(`Treatment Dates lists ${days.length} dates — only the first ${CLAIM_COLUMNS_PER_ROW} were used.`);
-        days = days.slice(0, CLAIM_COLUMNS_PER_ROW);
-    }
-
+    const days = treatment.days.slice(0, CLAIM_COLUMNS_PER_ROW);
+    if (treatment.days.length > CLAIM_COLUMNS_PER_ROW) warnings.push("Only the first 7 treatment dates were used.");
     const declaredCount = parseInt(row[BATCH_HEADERS.CLAIM_COUNT], 10);
-    if (!isNaN(declaredCount) && declaredCount !== days.length) {
-        warnings.push(`No. of Claims says ${declaredCount}, but ${days.length} Treatment Date(s) were found.`);
+    if (!isNaN(declaredCount) && declaredCount !== days.length) warnings.push("No. of Claims differs from Treatment Dates.");
+    const markers = {
+        hasEpoAlfa: parseDayListCell(row[BATCH_HEADERS.EPO_ALFA]),
+        hasEpoBeta: parseDayListCell(row[BATCH_HEADERS.EPO_BETA]),
+        hasIronSucrose: parseDayListCell(row[BATCH_HEADERS.IRON]),
+        hasLab: parseDayListCell(row[BATCH_HEADERS.LAB]),
+        reuse: parseDayListCell(row[BATCH_HEADERS.REUSE])
+    };
+    for (const [key, dates] of Object.entries(markers)) {
+        for (const day of dates) if (!days.includes(day)) warnings.push(`${key}: day ${day} is not a treatment date and was not included.`);
     }
-
-    const epoAlfaQty = parseDayQtyListCell(row[BATCH_HEADERS.EPO_ALFA]);
-    const epoBetaQty = parseDayQtyListCell(row[BATCH_HEADERS.EPO_BETA]);
-    const labDays = parseDayListCell(row[BATCH_HEADERS.LAB]);
-
+    if (days.some(day => markers.hasEpoAlfa.has(day) && markers.hasEpoBeta.has(day))) {
+        return { name, state: { claims: [] }, warnings: [...warnings,
+            "Alfa and Beta cannot be given on the same treatment date. Correct the EPO dates before generating."] };
+    }
     const month = treatment.month || defaultMonth;
     const year = treatment.year || defaultYear;
-
-    const claims = days.map(day => {
-
-        const renderDate = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-
-        const inBeta = epoBetaQty.has(day);
-        const inAlfa = epoAlfaQty.has(day);
-        const hasEpo = inAlfa || inBeta;
-        const epoType = inBeta ? "beta" : "alfa";
-
-        let epoQty = hasEpo ? (inBeta ? epoBetaQty.get(day) : epoAlfaQty.get(day)) : 1;
-        const maxQty = epoType === "beta" ? 1 : 2;
-
-        if (epoQty > maxQty) {
-            warnings.push(`${epoType === "beta" ? "Beta Recormon" : "Erythropoietin Given"} on day ${day} lists quantity ${epoQty}, but ${epoType === "beta" ? "Beta" : "Alfa"} allows max ${maxQty} — clamped to ${maxQty}.`);
-            epoQty = maxQty;
-        }
-
-        return {
-            renderDate,
-            hasEpo,
-            epoQty: hasEpo ? epoQty : 1,
-            epoType: hasEpo ? epoType : "alfa",
-            hasLab: labDays.has(day)
-        };
-
-    });
-
-    // A day listed in one of the marker columns but not among this row's
-    // actual Treatment Dates (e.g. a typo like "23" when the claims run
-    // 27/29/31) has nowhere to attach — flag it rather than guessing which
-    // claim it belongs to or silently dropping it.
-    const claimDaySet = new Set(days);
-
-    const flagOrphanDays = (dayIterable, columnLabel, doseNoun) => {
-        dayIterable.forEach(d => {
-            if (!claimDaySet.has(d)) {
-                warnings.push(`${columnLabel} lists day ${d}, which doesn't match any Treatment Date — check for a typo; that ${doseNoun} wasn't included.`);
-            }
-        });
-    };
-
-    flagOrphanDays(Array.from(epoAlfaQty.keys()), "Erythropoietin Given", "dose");
-    flagOrphanDays(Array.from(epoBetaQty.keys()), "Beta Recormon", "dose");
-    flagOrphanDays(labDays, "W/ Lab", "lab");
-
-    return { name, state: { accessType, fluxType, claims }, warnings };
-
+    const claims = days.map(day => ({
+        renderDate: `${year}-${String(month).padStart(2,"0")}-${String(day).padStart(2,"0")}`,
+        epoType: markers.hasEpoBeta.has(day) ? "beta" : markers.hasEpoAlfa.has(day) ? "alfa" : "none",
+        hasIronSucrose: markers.hasIronSucrose.has(day), hasLab: markers.hasLab.has(day),
+        dialyzerType: markers.reuse.has(day) ? "reuse" : "new"
+    }));
+    return { name, state: { claims }, warnings };
 }
 
 async function downloadBatchTemplate() {
@@ -1835,8 +1457,8 @@ async function downloadBatchTemplate() {
         "NO. OF CLAIMS",
         "DATES OF ERYTHROPOIETIN GIVEN\n(WEEKLY)",
         "BETA RECORMON",
-        "DIALYZER CATEGORY",
-        "KIT CATEGORY",
+        "IRON SUCROSE",
+        "RE-USE DATES",
         "W/ LAB"
     ]);
 
@@ -1846,23 +1468,10 @@ async function downloadBatchTemplate() {
         cell.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
     });
 
-    // Same three real examples as the working reference sheet, plus a set
-    // of format-teaching examples covering every notation the parser now
-    // accepts: dose-quantity variants, day ranges, ordinal suffixes, an
-    // explicit year override, and the alternate separators (; /).
     const sampleRows = [
-        ["ABAO", "29-Jul", 1, "", 29, "FISTULA", "HIGH FLUX", 29],
-        ["ABOGADO", "Jul 28,30", 2, "28,30", "", "SUBKIT", "LOW FLUX", "28"],
-        ["ALARZAR", "Jul 27,29,31", 3, "27,31", "", "SUBKIT", "LOW FLUX", "NO"],
-        ["EXAMPLE 1 - dose qty (2)", "Jul 27,31", 2, "27(2),31", "", "SUBKIT", "LOW FLUX", "NO"],
-        ["EXAMPLE 2 - dose qty x2", "Jul 27,31", 2, "27x2,31", "", "SUBKIT", "LOW FLUX", "NO"],
-        ["EXAMPLE 3 - dose qty *2", "Jul 27,31", 2, "27*2,31", "", "SUBKIT", "LOW FLUX", "NO"],
-        ["EXAMPLE 4 - repeated day = qty 2", "Jul 27,31", 2, "27,27,31,31", "", "SUBKIT", "HIGH FLUX", "NO"],
-        ["EXAMPLE 5 - day range", "Jul 27-29", 3, "27-29", "", "SUBKIT", "LOW FLUX", "27"],
-        ["EXAMPLE 6 - ordinal days", "29th Jul", 1, "29th", "", "FISTULA", "HIGH FLUX", "NO"],
-        ["EXAMPLE 7 - explicit year", "Jul 28, 2027", 1, "28", "", "FISTULA", "LOW FLUX", "NO"],
-        ["EXAMPLE 8 - semicolon/slash separators", "Jul 5/7/9", 3, "5;7;9", "", "SUBKIT", "HIGH FLUX", "NO"],
-        ["EXAMPLE 9 - bare day list, no month", "28,30", 2, "28,30", "", "SUBKIT", "LOW FLUX", "NO"]
+        ["SAMPLE WITH LAB", "Aug 2,4,6", 3, "2,6", "4", "2,4,6", "6", "2"],
+        ["SAMPLE NO LAB", "Aug 18,20,22", 3, "18,22", "20", "20", "18,20", "NO"],
+        ["NO OPTIONAL MEDICINES", "Aug 8,10", 2, "", "", "", "10", ""]
     ];
 
     sampleRows.forEach(values => {
@@ -1884,13 +1493,14 @@ async function downloadBatchTemplate() {
 
     const noteLines = [
         ["NAME OF PATIENT", "Used as the output file name."],
-        ["TREATMENT DATES", "Accepts a real date, \"29-Jul\", \"Jul 28,30\", a day range (\"Jul 27-29\"), ordinal days (\"29th Jul\", \"1st,3rd\"), or an explicit year anywhere in the text (\"Jul 28, 2027\") to override the app's Default Claim Period year. Days can be separated with commas, semicolons, or slashes (\"5;7;9\", \"5/7/9\"). If you only type day numbers with no month (e.g. \"28,30\" or \"27-29\"), the app's Default Claim Period month/year fills the gap."],
-        ["NO. OF CLAIMS", "Informational — the app counts claims from Treatment Dates directly. A mismatch just shows as a warning, it won't block generation."],
-        ["DATES OF ERYTHROPOIETIN GIVEN (WEEKLY)", "Day number(s) EPO Alfa was given — must match a day already listed in Treatment Dates. A second dose on the same day: write \"27(2)\", \"27x2\", \"27*2\", or list the day twice (\"27,27\"). A range like \"27-29\" applies to every day in it; add a quantity to the whole range with \"27-29x2\". Ordinal suffixes (\"27th\") and semicolon/slash separators are also accepted. Max 2 doses per day."],
-        ["BETA RECORMON", "Same formats and matching rules as Erythropoietin above, but max 1 dose per day."],
-        ["W/ LAB", "Day number(s) a lab was included — accepts the same day-range, ordinal, and separator formats as the other columns — or \"NO\" / blank for none."],
-        ["DIALYZER CATEGORY", "FISTULA or SUBKIT."],
-        ["KIT CATEGORY", "HIGH FLUX or LOW FLUX."]
+        ["TREATMENT DATES", "Treatment days, for example Aug 2,4,6. Bare days use the Default Claim Period. Maximum 7 claims."],
+        ["NO. OF CLAIMS", "Informational; claims are counted from Treatment Dates."],
+        ["DATES OF ERYTHROPOIETIN GIVEN (WEEKLY)", "Days to include EPOETIN ALFA. Quantity is always 1."],
+        ["BETA RECORMON", "Days to include EPOETIN BETA. Must not overlap with Alfa dates. Leave both EPO date columns blank for no EPO."],
+        ["IRON SUCROSE", "Days to include Iron Sucrose."],
+        ["RE-USE DATES", "Days using a Re-use Highflux Dialyzer. Other treatment days use New."],
+        ["W/ LAB", "Days to include the complete laboratory panel. Enter NO or leave blank for no laboratory on any treatment. See SAMPLE NO LAB in the Batch sheet."],
+        ["Day lists", "Use day numbers such as 2,4,6 or ranges such as 2-4. Do not enter dose quantities."]
     ];
 
     noteLines.forEach(([label, desc]) => {

@@ -4,6 +4,7 @@ const path = require("path");
 const fs = require("fs");
 
 const router = express.Router();
+const { validateSoa } = require("../services/validateSoa");
 
 const { fillSheet1 } = require("../services/sheet1Generator");
 const { fillSheet2 } = require("../services/sheet2Generator");
@@ -44,6 +45,8 @@ getTemplateBuffer().catch((err) => {
 });
 
 router.post("/", async (req, res) => {
+    const error = validateSoa(req.body);
+    if (error) return res.status(400).json({ error });
 
     try {
 

@@ -1,0 +1,287 @@
+{
+  "drugs": [
+    [
+      "MED001",
+      "EPOSINO",
+      "EPOETIN ALFA",
+      1,
+      1200,
+      null,
+      "PRE-FILLED SYRINGE",
+      null,
+      "POST HD TREATMENT",
+      "SUBCUTANEOUS",
+      "EPOETIN ALFA (RECOMBINANT HUMAN ERYTHROPOIETIN) 4000 IU/mL SOLUTION 1 mL PRE-FILLED GLASS SYRINGE",
+      "VIAL"
+    ],
+    [
+      "MED002",
+      "RECORMON",
+      "EPOETIN BETA",
+      1,
+      1750,
+      null,
+      "PRE-FILLED SYRINGE",
+      null,
+      "POST HD TREATMENT",
+      "SUBCUTANEOUS",
+      "EPOETIN BETA (RECOMBINANT ERYTHROPOIETIN) 5000IU/0.3ml SOLUTION PRE-FILLED SYRINGE WITH NEEDLE",
+      "VIAL"
+    ],
+    [
+      "MED003",
+      "SUCROSAPH",
+      "IRON SUCROSE",
+      1,
+      375,
+      null,
+      "AMPULE",
+      null,
+      "AS NEEDED",
+      "INTRAVENOUS",
+      null,
+      "PIECE"
+    ],
+    [
+      "MED004",
+      "0.9% SODIUM CHLORIDE",
+      "SODIUM CHLORIDE",
+      1,
+      80,
+      null,
+      "BOTTLE",
+      null,
+      "DURING HD TREATMENT",
+      "INTRAVENOUS",
+      "0.9% SODIUM CHLORIDE SOLUTION 1 L BOTTLE",
+      "BOTTLE"
+    ],
+    [
+      "MED005",
+      "UNIHEPA",
+      "HEPARIN",
+      1,
+      110,
+      null,
+      "VIAL",
+      null,
+      "DURING HD TREATMENT",
+      "INTRAVENOUS",
+      "HEPARIN ( as SODIUM) 5000 IU/mL SOLUTION 5 mL VIAL",
+      "VIAL"
+    ]
+  ],
+  "supplies": [
+    [
+      "Others",
+      "HD Machine use",
+      1,
+      3500,
+      null,
+      null,
+      "RoomAndBoard",
+      "SET",
+      "OTHERS"
+    ],
+    [
+      "Supplies",
+      "Highflux Dialyzer new",
+      1,
+      3500,
+      null,
+      null,
+      "MedicalSupplies",
+      "PIECE",
+      "DIALYZER, CELLULOSE HIGH EFFICIENCY AM-SD-750U"
+    ],
+    [
+      "Supplies",
+      "Bicarbonate Bath",
+      1,
+      365,
+      null,
+      null,
+      "MedicalSupplies",
+      "GALLON",
+      "BICARBONATE POWDER FOR HEMODIALYSIS"
+    ],
+    [
+      "Supplies",
+      "Acid Concentrate",
+      1,
+      522.5,
+      null,
+      null,
+      "MedicalSupplies",
+      "GALLON",
+      "ACID CONCENTRATE"
+    ],
+    [
+      "Supplies",
+      "Bloodlines",
+      1,
+      350,
+      null,
+      null,
+      "MedicalSupplies",
+      "PIECE",
+      "BLOODLINES"
+    ],
+    [
+      "Supplies",
+      "Fistula Needle",
+      1,
+      30,
+      null,
+      null,
+      "MedicalSupplies",
+      "PIECE",
+      "AV FISTULA NEEDLE G. 17 2'S"
+    ],
+    [
+      "Supplies",
+      "Fistula Kit",
+      1,
+      105,
+      null,
+      null,
+      "MedicalSupplies",
+      "KIT",
+      "FISTULA KIT"
+    ],
+    [
+      "Supplies",
+      "10 cc syringe",
+      1,
+      55,
+      null,
+      null,
+      "MedicalSupplies",
+      "PIECE",
+      "SYRINGE DISPOSABLE (10 CC)"
+    ]
+  ],
+  "laboratory": [
+    [
+      "Laboratory",
+      "Complete Blood count",
+      1,
+      115,
+      null,
+      null,
+      "LaboratoryAndDiagnostic",
+      null,
+      "HEMATOLOGY: CBC"
+    ],
+    [
+      "Laboratory",
+      "Serum creatinine",
+      1,
+      100,
+      null,
+      null,
+      "LaboratoryAndDiagnostic",
+      null,
+      "CHEMISTRY: CREATININE"
+    ],
+    [
+      "Laboratory",
+      "BUN",
+      1,
+      80,
+      null,
+      null,
+      "LaboratoryAndDiagnostic",
+      null,
+      "CHEMISTRY: BUN"
+    ],
+    [
+      "Laboratory",
+      "Potassium",
+      1,
+      79,
+      null,
+      null,
+      "LaboratoryAndDiagnostic",
+      null,
+      "CHEMISTRY: POTASSIUM"
+    ],
+    [
+      "Laboratory",
+      "Phosphorus",
+      1,
+      76,
+      null,
+      null,
+      "LaboratoryAndDiagnostic",
+      null,
+      "CHEMISTRY: PHOSPHOROUS"
+    ],
+    [
+      "Laboratory",
+      "Calcium",
+      1,
+      86.5,
+      null,
+      null,
+      "LaboratoryAndDiagnostic",
+      null,
+      "CHEMISTRY: SERUM CALCIUM"
+    ],
+    [
+      "Laboratory",
+      "Sodium",
+      1,
+      76,
+      null,
+      null,
+      "LaboratoryAndDiagnostic",
+      null,
+      "CHEMISTRY: SODIUM"
+    ],
+    [
+      "Laboratory",
+      "Albumin",
+      1,
+      75,
+      null,
+      null,
+      "LaboratoryAndDiagnostic",
+      null,
+      "CHEMISTRY: SERUM ALBUMIN"
+    ],
+    [
+      "Laboratory",
+      "Iron Studies",
+      1,
+      1500,
+      null,
+      null,
+      "LaboratoryAndDiagnostic",
+      null,
+      "CHEMISTRY: TOTAL IRON BINDING CAPACITY (TBIC)"
+    ],
+    [
+      "Laboratory",
+      "Hepatitis profile ",
+      1,
+      1250,
+      null,
+      null,
+      "LaboratoryAndDiagnostic",
+      null,
+      "CHEMISTRY: RAPID HEP-HBSAG (QUALITATIVE)"
+    ]
+  ],
+  "reuse": [
+    "Supplies",
+    "Highflux Dialyzer re-use",
+    1,
+    2352.5,
+    null,
+    null,
+    "MedicalSupplies",
+    "PIECE",
+    "DIALYZER, CELLULOSE HIGH EFFICIENCY AM-SD-750U"
+  ]
+}
