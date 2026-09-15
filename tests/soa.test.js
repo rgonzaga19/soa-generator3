@@ -80,6 +80,30 @@ test('license validation caches successful checks for five minutes', async () =>
     assert.equal((await vm.runInContext("validateLicenseKey('abc')",context)).valid,true);
     assert.equal(calls,2);
 });
+test('mandatory updates block generation only for newer required versions', async () => {
+    const source=fs.readFileSync('public/js/app.js','utf8');
+    const nodes = new Map();
+    function node(){return {textContent:'',style:{},children:[],appendChild(c){this.children.push(c)}};}
+    for (const id of ['latestVersion','updateStatus','releaseNotes','releaseNotesContainer','downloadUpdateBtn']) nodes.set(id,node());
+    let toast = '';
+    let view = '';
+    const context=vm.createContext({
+        document:{getElementById:id=>nodes.get(id),createElement:()=>node()},
+        window:{electronAPI:{getAppVersion:async()=> '1.0.2'}},
+        showToast:(message)=>{toast=message},
+        showWorkspaceView:(name)=>{view=name}
+    });
+    const helpers = source.slice(source.indexOf('let currentVersion'),source.indexOf('async function checkForUpdates'));
+    vm.runInContext(helpers,context);
+    assert.equal(await vm.runInContext("blockForMandatoryUpdate({version:'1.0.3', mandatory:true, notes:['Required']})",context),true);
+    assert.equal(nodes.get('latestVersion').textContent,'1.0.3');
+    assert.match(nodes.get('updateStatus').textContent,/Mandatory update required/);
+    assert.equal(nodes.get('downloadUpdateBtn').style.display,'inline-block');
+    assert.equal(view,'about');
+    assert.match(toast,/1.0.3/);
+    assert.equal(await vm.runInContext("blockForMandatoryUpdate({version:'1.0.3', mandatory:false})",context),false);
+    assert.equal(await vm.runInContext("blockForMandatoryUpdate({version:'1.0.2', mandatory:true})",context),false);
+});
 test('frontend selection, reset, and batch parsing use the new claim shape', () => {
     const source=fs.readFileSync('public/js/app.js','utf8');
     const context=vm.createContext({document:{getElementById:()=>({value:0})},clearBatchSection:()=>{},

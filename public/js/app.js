@@ -93,6 +93,65 @@ function isNewerVersion(latest, current) {
 
 }
 
+async function getMandatoryUpdate(updateInfo) {
+    if (!updateInfo || updateInfo.mandatory !== true) return null;
+
+    if (!currentVersion) {
+        currentVersion = await window.electronAPI.getAppVersion();
+    }
+
+    return isNewerVersion(updateInfo.version, currentVersion)
+        ? updateInfo
+        : null;
+}
+
+function showAvailableUpdate(updateInfo, mandatory = false) {
+    latestUpdateInfo = updateInfo;
+
+    document.getElementById("latestVersion").textContent =
+        updateInfo.version;
+
+    document.getElementById("updateStatus").textContent = mandatory
+        ? `Mandatory update required: version ${updateInfo.version}.`
+        : `Version ${updateInfo.version} is available.`;
+
+    setUpdateBadge(
+        "available",
+        mandatory
+            ? `Required update (v${updateInfo.version})`
+            : `Update available (v${updateInfo.version})`
+    );
+
+    const notes = document.getElementById("releaseNotes");
+
+    notes.innerHTML = "";
+
+    (updateInfo.notes || []).forEach(note => {
+
+        const li = document.createElement("li");
+        li.textContent = note;
+        notes.appendChild(li);
+
+    });
+
+    document.getElementById("releaseNotesContainer").style.display = "block";
+    document.getElementById("downloadUpdateBtn").style.display = "inline-block";
+}
+
+async function blockForMandatoryUpdate(updateInfo) {
+    const mandatoryUpdate = await getMandatoryUpdate(updateInfo);
+    if (!mandatoryUpdate) return false;
+
+    showAvailableUpdate(mandatoryUpdate, true);
+    showToast(
+        `Version ${mandatoryUpdate.version} is required before generating.`,
+        "error"
+    );
+    showWorkspaceView("about");
+
+    return true;
+}
+
 async function checkForUpdates(showLatestMessage = false) {
 
     setUpdateBadge("checking", "Checking…");
@@ -166,6 +225,11 @@ async function checkForUpdates(showLatestMessage = false) {
 
             return;
 
+        }
+
+        if (latestUpdateInfo.mandatory === true) {
+            showAvailableUpdate(latestUpdateInfo, true);
+            return;
         }
 
         document.getElementById("updateStatus").textContent =
@@ -985,6 +1049,15 @@ async function generateExcel() {
         // show it next time it's opened, instead of just a masked key.
         lastLicenseInfo = licenseResult;
 
+        if (await blockForMandatoryUpdate(licenseResult.update)) {
+            overlay.style.display = "none";
+            btn.disabled = false;
+            btn.textContent = "Generate Excel";
+            document.getElementById("systemStatus").textContent =
+                "Mandatory update required";
+            return;
+        }
+
         loadingText.textContent = "Generating Excel...";
         btn.textContent = "Generating...";
 
@@ -1792,6 +1865,14 @@ async function generateBatch() {
 
         return;
 
+    }
+
+    lastLicenseInfo = licenseResult;
+
+    if (await blockForMandatoryUpdate(licenseResult.update)) {
+        batchGenerateBtn.disabled = false;
+        batchGenerateBtn.textContent = "ðŸ“¦ Generate Batch (ZIP)";
+        return;
     }
 
     batchProgress.style.display = "block";
