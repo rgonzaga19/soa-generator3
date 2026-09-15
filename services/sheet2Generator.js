@@ -9,8 +9,8 @@ function fillSheet2(workbook, data) {
         if (claim.hasLab) items.push(...laboratory);
         for (const source of items) {
             const values = [...source];
-            values[2] = 1;
-            values[4] = values[3];
+            values[2] = values[2] || 1;
+            values[4] = values[2] * values[3];
             values[5] = new Date(`${claim.renderDate}T00:00:00.000Z`);
             const row = sheet.addRow(values);
             styleTreatmentRow(row, claimIndex, 9);

@@ -29,7 +29,10 @@ test('all medicine, dialyzer and laboratory combinations use sample prices and f
         const ids = []; drugs.eachRow((row,n) => { if(n > 2) { ids.push(row.getCell(1).value); assert.equal(row.getCell(4).value,1); } });
         assert.deepEqual(ids, [(c.epoType === "alfa") && 'MED001', (c.epoType === "beta") && 'MED002', c.hasIronSucrose && 'MED003', 'MED004','MED005'].filter(Boolean));
         assert.equal(total(drugs,6),190 + ((c.epoType === "alfa") ? 1200 : 0) + ((c.epoType === "beta") ? 1750 : 0) + (c.hasIronSucrose ? 375 : 0));
-        assert.equal(total(supplies,5), (c.dialyzerType === 'reuse' ? 7280 : 8427.5) + (c.hasLab ? 3437.5 : 0));
+        assert.equal(total(supplies,5), (c.dialyzerType === 'reuse' ? 7310 : 8457.5) + (c.hasLab ? 3437.5 : 0));
+        const fistulaNeedle = supplies.getRows(3, supplies.rowCount - 2).find(row => row.getCell(2).value === 'Fistula Needle');
+        assert.equal(fistulaNeedle.getCell(3).value, 2);
+        assert.equal(fistulaNeedle.getCell(5).value, 60);
         assert.equal(supplies.rowCount, c.hasLab ? 20 : 10);
     }
 });
@@ -44,7 +47,7 @@ test('three claims survive Excel serialization with correct dates and totals', a
     assert.equal(read.getWorksheet(2).getCell('B30').value,'Highflux Dialyzer re-use');
     assert.equal(read.getWorksheet(2).getCell('D30').value,2352.5);
     assert.equal(read.getWorksheet(1).getCell('H11').value.toISOString(),'2026-08-06T00:00:00.000Z');
-    assert.equal(total(read.getWorksheet(1),6)+total(read.getWorksheet(2),5),33417.5);
+    assert.equal(total(read.getWorksheet(1),6)+total(read.getWorksheet(2),5),33507.5);
 });
 test('request validation rejects malformed dates and old claim shape', () => {
     assert.equal(validateSoa({claims:[claim()]}),null);
