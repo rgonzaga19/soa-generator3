@@ -557,6 +557,48 @@ document
     .getElementById("themeToggleBtn")
     .addEventListener("click", toggleTheme);
 
+// Sidebar collapse
+const SIDEBAR_STORAGE_KEY = "soaSidebarCollapsed";
+
+function applySidebarCollapsed(collapsed) {
+    if (!document.body) return;
+
+    document.body.classList.toggle("sidebar-collapsed", collapsed);
+
+    const btn = document.getElementById("sidebarToggleBtn");
+    if (btn) {
+        btn.setAttribute("aria-expanded", String(!collapsed));
+        btn.setAttribute("aria-label", collapsed ? "Show sidebar" : "Hide sidebar");
+        btn.title = collapsed ? "Show sidebar" : "Hide sidebar";
+    }
+
+    try {
+        localStorage.setItem(SIDEBAR_STORAGE_KEY, collapsed ? "true" : "false");
+    } catch (e) {
+        // localStorage unavailable - sidebar state just won't persist.
+    }
+}
+
+function initSidebarToggle() {
+    const btn = document.getElementById("sidebarToggleBtn");
+    if (!btn || !document.body) return;
+
+    let collapsed = false;
+
+    try {
+        collapsed = localStorage.getItem(SIDEBAR_STORAGE_KEY) === "true";
+    } catch (e) {
+        collapsed = false;
+    }
+
+    applySidebarCollapsed(collapsed);
+    btn.addEventListener("click", () => {
+        applySidebarCollapsed(!document.body.classList.contains("sidebar-collapsed"));
+    });
+}
+
+initSidebarToggle();
+
 // ── License settings helpers ────────────────────────────────────
 
 // Cached result of the most recent successful validation, so the Settings
