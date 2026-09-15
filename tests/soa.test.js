@@ -56,17 +56,42 @@ test('request validation rejects malformed dates and old claim shape', () => {
         {claims:[claim({dialyzerType:'low'})]},{claims:[claim({hasIronSucrose:'false'})]},
         {claims:[{renderDate:'2026-08-02',hasEpo:true,epoType:'alfa'}]}]) assert.ok(validateSoa(data));
 });
+test('license validation caches successful checks for five minutes', async () => {
+    const source=fs.readFileSync('public/js/app.js','utf8');
+    let now = 1000;
+    let calls = 0;
+    const context=vm.createContext({
+        Date: { now: () => now },
+        window: { electronAPI: { saveLicenseKey: async () => {} } },
+        fetch: async () => {
+            calls++;
+            return { ok: true, json: async () => ({ valid: true, owner: 'Clinic', plan: 'Pro' }) };
+        },
+        setTimeout, clearTimeout, AbortController, console
+    });
+    const licenseConstants = source.slice(source.indexOf('const LICENSE_VALIDATION_URL'),source.indexOf('// ── Release log'));
+    const settingsListener = source.lastIndexOf('document', source.indexOf('getElementById("settingsBtn")'));
+    const licenseHelpers = source.slice(source.indexOf('// ── License settings helpers'),settingsListener);
+    vm.runInContext(licenseConstants + licenseHelpers,context);
+    assert.equal((await vm.runInContext("validateLicenseKey('abc')",context)).valid,true);
+    assert.equal((await vm.runInContext("validateLicenseKey(' abc ')",context)).valid,true);
+    assert.equal(calls,1);
+    now += (5 * 60 * 1000) + 1;
+    assert.equal((await vm.runInContext("validateLicenseKey('abc')",context)).valid,true);
+    assert.equal(calls,2);
+});
 test('frontend selection, reset, and batch parsing use the new claim shape', () => {
     const source=fs.readFileSync('public/js/app.js','utf8');
     const context=vm.createContext({document:{getElementById:()=>({value:0})},clearBatchSection:()=>{},
         claimsContainer:{innerHTML:''},summary:{innerHTML:''}});
-    const slices = [source.slice(0,source.indexOf('//')), source.slice(source.indexOf('function renderClaims()'),source.indexOf('function toggleLab(')),
+    const slices = [source.slice(0,source.indexOf('//')), 'let activeDatePickerIndex = null; let pendingDatePickerToggleIndex = null;',
+        source.slice(source.indexOf('function renderClaims()'),source.indexOf('function toggleLab(')),
         source.slice(source.indexOf('function clearForm()'),source.indexOf('const aboutBtn')),
         'const CLAIM_COLUMNS_PER_ROW=7;',source.slice(source.indexOf('function normalizeHeader('),source.indexOf('async function downloadBatchTemplate()'))];
     vm.runInContext(slices.join('\n'),context);
     vm.runInContext(`renderClaims(); updateClaimOption(0,'hasIronSucrose',true); updateClaimOption(0,'dialyzerType','reuse');`,context);
     assert.match(context.claimsContainer.innerHTML,/class="date-text-input" type="text"/);
-    assert.match(context.claimsContainer.innerHTML,/onclick="openDatePicker\(0\)"/);
+    assert.match(context.claimsContainer.innerHTML,/onclick="openDatePicker\(0, event\)"/);
     assert.doesNotMatch(context.claimsContainer.innerHTML,/id="renderDate0"[^>]+type="date"/);
     assert.equal(vm.runInContext(`(() => {
         let calls = 0;
@@ -88,6 +113,28 @@ test('frontend selection, reset, and batch parsing use the new claim shape', () 
         openDatePicker(0);
         return calls;
     })()`,context),1);
+    assert.equal(vm.runInContext(`(() => {
+        const calls = { show: 0, blur: 0, prevented: 0, stopped: 0 };
+        const els = {
+            renderDatePicker0: {
+                focus() {},
+                showPicker() { calls.show++; },
+                blur() { calls.blur++; }
+            },
+            renderDate0: { focus() {} }
+        };
+        const event = {
+            preventDefault() { calls.prevented++; },
+            stopPropagation() { calls.stopped++; }
+        };
+        document.getElementById = id => els[id] || { style: {} };
+        datePickerToggleStarted(0);
+        openDatePicker(0, event);
+        datePickerToggleStarted(0);
+        datePickerClosed(0);
+        openDatePicker(0, event);
+        return JSON.stringify(calls);
+    })()`,context),JSON.stringify({ show: 1, blur: 1, prevented: 1, stopped: 1 }));
     assert.equal(vm.runInContext(`(() => {
         const els = {
             dateError0: { style: {} },

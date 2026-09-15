@@ -91,10 +91,16 @@
             <div class="card">
                 <h2>Batch Generate</h2>
 
-                <p class="batch-hint">
-                    Upload an Excel file with one row per person to generate
-                    multiple SOAs in one go, packaged into a single .zip.
-                </p>
+                <div class="batch-intro-row">
+                    <p class="batch-hint">
+                        Upload an Excel file with one row per person to generate
+                        multiple SOAs in one go, packaged into a single .zip.
+                    </p>
+                    <button id="batchClearBtn" type="button" class="batch-clear-btn" title="Clear batch form" aria-label="Clear batch form">
+                        <span class="batch-clear-icon" aria-hidden="true"></span>
+                        Clear Form
+                    </button>
+                </div>
 
                 <div class="field">
                     <label>Default Claim Period</label>

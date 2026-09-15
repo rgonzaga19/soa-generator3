@@ -278,6 +278,9 @@ const claimsContainer = document.getElementById("claimsContainer");
 
 const summary = document.getElementById("summary");
 
+let activeDatePickerIndex = null;
+let pendingDatePickerToggleIndex = null;
+
 function renderClaims() {
     if (!claimsContainer) return;
     const today = new Date().toISOString().split("T")[0];
@@ -292,12 +295,13 @@ function renderClaims() {
                             inputmode="numeric" maxlength="10" placeholder="YYYY-MM-DD" autocomplete="off"
                             oninput="updateDate(${index}, this.value)">
                         <button class="date-picker-button" type="button" aria-label="Choose render date"
-                            onclick="openDatePicker(${index})">
+                            onpointerdown="datePickerToggleStarted(${index})"
+                            onclick="openDatePicker(${index}, event)">
                             <span aria-hidden="true"></span>
                         </button>
                         <input id="renderDatePicker${index}" class="date-picker-proxy" type="date" value="${claim.renderDate}"
                             min="2020-01-01" max="${today}" tabindex="-1" aria-hidden="true"
-                            onchange="syncPickedDate(${index}, this.value)">
+                            onchange="syncPickedDate(${index}, this.value)" onblur="datePickerClosed(${index})">
                     </div>
                     <small id="dateError${index}" style="color:red; display:none;">Date cannot be in the future.</small>
                 </div>
@@ -332,7 +336,16 @@ function updateClaimOption(index, key, value) {
     renderSummary();
 }
 
-function openDatePicker(index) {
+function datePickerToggleStarted(index) {
+    pendingDatePickerToggleIndex = index;
+}
+
+function datePickerClosed(index) {
+    if (pendingDatePickerToggleIndex === index) return;
+    if (activeDatePickerIndex === index) activeDatePickerIndex = null;
+}
+
+function openDatePicker(index, event) {
     const input = document.getElementById(`renderDatePicker${index}`);
     const textInput = document.getElementById(`renderDate${index}`);
 
@@ -341,9 +354,25 @@ function openDatePicker(index) {
         return;
     }
 
+    if (activeDatePickerIndex === index && pendingDatePickerToggleIndex === index) {
+        if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        input.blur();
+        activeDatePickerIndex = null;
+        pendingDatePickerToggleIndex = null;
+        return;
+    }
+
     try {
+        activeDatePickerIndex = index;
+        if (typeof input.focus === "function") input.focus();
         input.showPicker();
+        pendingDatePickerToggleIndex = null;
     } catch (err) {
+        activeDatePickerIndex = null;
+        pendingDatePickerToggleIndex = null;
         if (textInput) textInput.focus();
     }
 }
@@ -534,6 +563,8 @@ document
 // panel can show owner/plan/expiry instead of just a masked key once we've
 // actually confirmed the key against the server.
 let lastLicenseInfo = null;
+let cachedLicenseValidation = null;
+const LICENSE_VALIDATION_CACHE_MS = 5 * 60 * 1000;
 
 // The license key is persisted by the main process to a file in the
 // app's userData folder (see electron-main.js) rather than renderer
@@ -558,6 +589,7 @@ async function saveLicenseKey(key) {
     // info from a previous (different) key so the status display doesn't
     // show stale owner/plan details for a key that's since changed.
     lastLicenseInfo = null;
+    cachedLicenseValidation = null;
 
 }
 
@@ -671,6 +703,17 @@ async function validateLicenseKey(key) {
         };
     }
 
+    const trimmedKey = key.trim();
+    const now = Date.now();
+
+    if (
+        cachedLicenseValidation
+        && cachedLicenseValidation.key === trimmedKey
+        && cachedLicenseValidation.expiresAt > now
+    ) {
+        return cachedLicenseValidation.result;
+    }
+
     const controller = new AbortController();
     const timeoutId = setTimeout(
         () => controller.abort(),
@@ -684,7 +727,7 @@ async function validateLicenseKey(key) {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ license: key.trim() }),
+            body: JSON.stringify({ license: trimmedKey }),
             signal: controller.signal
         });
 
@@ -739,7 +782,7 @@ async function validateLicenseKey(key) {
 
         }
 
-        return {
+        const result = {
             valid: true,
             owner: data.owner,
             plan: data.plan,
@@ -747,6 +790,14 @@ async function validateLicenseKey(key) {
 
             update: data.update || null
         };
+
+        cachedLicenseValidation = {
+            key: trimmedKey,
+            result,
+            expiresAt: Date.now() + LICENSE_VALIDATION_CACHE_MS
+        };
+
+        return result;
 
     } catch (err) {
 
@@ -1163,6 +1214,7 @@ function sanitizeFileName(name) {
 const batchFileInput = document.getElementById("batchFileInput");
 const batchFileError = document.getElementById("batchFileError");
 const batchPreview = document.getElementById("batchPreview");
+const batchClearBtn = document.getElementById("batchClearBtn");
 const batchGenerateBtn = document.getElementById("batchGenerateBtn");
 const downloadTemplateBtn = document.getElementById("downloadTemplateBtn");
 const batchProgress = document.getElementById("batchProgress");
@@ -1802,4 +1854,8 @@ async function generateBatch() {
 
 if (batchGenerateBtn) {
     batchGenerateBtn.addEventListener("click", generateBatch);
+}
+
+if (batchClearBtn) {
+    batchClearBtn.addEventListener("click", clearBatchSection);
 }
