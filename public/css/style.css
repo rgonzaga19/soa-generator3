@@ -1496,74 +1496,6 @@ select:focus {
     box-shadow: none;
 }
 
-/* Release log (full version history) */
-.release-log-box {
-    background: var(--bg-surface-alt);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    padding: 14px 18px 6px;
-    margin-bottom: 20px;
-}
-
-.release-log-box h3 {
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .07em;
-    color: var(--text-faint);
-    margin-bottom: 8px;
-}
-
-.release-log-list {
-    max-height: 220px;
-    overflow-y: auto;
-}
-
-.release-log-entry {
-    padding: 10px 0;
-    border-top: 1px solid var(--border-light);
-}
-
-.release-log-entry:first-child {
-    border-top: none;
-}
-
-.release-log-entry-header {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    margin-bottom: 4px;
-}
-
-.release-log-version {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.release-log-date {
-    font-size: 11.5px;
-    color: var(--text-faint);
-    font-weight: 600;
-}
-
-.release-log-entry ul {
-    padding-left: 18px;
-}
-
-.release-log-entry li {
-    font-size: 12.5px;
-    color: var(--text-secondary);
-    margin-bottom: 3px;
-    line-height: 1.5;
-}
-
-.release-log-empty {
-    font-size: 12.5px;
-    color: var(--text-muted);
-    padding: 6px 0 10px;
-}
-
 .about-divider {
     height: 1px;
     background: var(--border-light);
@@ -1881,7 +1813,7 @@ select:focus {
 .workspace .workspace-view { backdrop-filter: none; }
 .workspace-view .about-modal-scroll { margin-right: 0; }
 .workspace .version-status-pill { box-shadow: none; }
-/* About: product overview, update center, and release history. */
+/* About: product overview and update center. */
 .workspace-view .about-page {
     display: block;
     background: transparent;
@@ -1894,7 +1826,7 @@ select:focus {
 .workspace-view .about-intro h2 { font-size: 28px; font-weight: 650; letter-spacing: -.7px; margin-bottom: 4px; }
 .workspace-view .about-intro p { margin: 0; color: var(--text-secondary); font-size: 14px; }
 .workspace-view .about-overview { max-width: 780px; color: var(--text-muted); font-size: 14px; margin-bottom: 30px; }
-.about-layout { display: grid; grid-template-columns: minmax(280px, .85fr) minmax(0, 1.35fr); gap: 24px; align-items: stretch; }
+.about-layout { display: block; }
 .about-section { min-width: 0; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 10px; padding: 24px; }
 .about-section-heading { padding-bottom: 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 20px; }
 .workspace-view .about-section-heading h3 { font-size: 15px; margin: 0 0 5px; }
@@ -1907,15 +1839,6 @@ select:focus {
 .about-updates .about-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
 .about-updates .about-actions button { width: 100%; margin: 0; border-radius: 7px; }
 .about-updates .release-notes-box { margin-top: 22px; background: var(--bg-surface-alt); border-color: var(--border-color); }
-.about-layout > .about-section { height: 460px; min-height: 0; }
-.about-updates { overflow-y: auto; }
-.about-history { display: flex; flex-direction: column; overflow: hidden; }
-.about-history .about-section-heading { flex-shrink: 0; }
-.about-history .release-log-list { flex: 1; min-height: 0; max-height: none; overflow-y: auto; padding-right: 8px; scrollbar-gutter: stable; }
-.about-history .release-log-entry { background: transparent; border-radius: 0; border: 0; border-bottom: 1px solid var(--border-color); padding: 0 0 20px; margin: 0 0 20px; }
-.about-history .release-log-entry:last-child { border-bottom: 0; margin-bottom: 0; padding-bottom: 0; }
-.about-history .release-log-version { color: var(--accent-strong); background: var(--accent-bg); border-radius: 4px; padding: 2px 7px; font-size: 12px; }
-.about-history .release-log-entry ul { color: var(--text-secondary); font-size: 13px; line-height: 1.8; }
 .about-details { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border-color); }
 .workspace-view .about-details p { margin: 0; color: var(--text-muted); font-size: 12px; }
 .workspace-view .about-details .about-detail-title { color: var(--text-primary); font-size: 14px; font-weight: 600; margin-bottom: 6px; }
@@ -1924,9 +1847,6 @@ select:focus {
 .about-tool > span > span:last-child { font-size: 12px; color: var(--text-muted); }
 .about-tool-arrow { color: var(--text-muted); font-size: 22px; }
 .about-tool:hover { border-color: var(--accent); }
-@media (max-width: 1050px) {
-    .about-layout { grid-template-columns: 1fr; }
-}
 @media (max-width: 700px) {
     .workspace-view .about-page { padding: 0; }
     .about-details { grid-template-columns: 1fr; }

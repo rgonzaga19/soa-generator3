@@ -272,72 +272,6 @@ async function checkForUpdates(showLatestMessage = false) {
 const LICENSE_VALIDATION_URL = "https://new-hope-soa-excelgenerator.gonzagaromel19.workers.dev";
 const LICENSE_REQUEST_TIMEOUT_MS = 10000; // matches the Python client's timeout=10
 
-// ── Release log (full version history, shown in the About modal) ────────
-let releaseLogLoaded = false;
-
-async function loadReleaseLog() {
-
-    const container = document.getElementById("releaseLog");
-    if (!container) return;
-
-    // Cache it for the session — the history only changes with a new
-    // worker deploy, no need to refetch every time the modal opens.
-    if (releaseLogLoaded) return;
-
-    try {
-
-        const response = await fetch(`${LICENSE_VALIDATION_URL}/changelog`);
-
-        if (!response.ok) {
-            throw new Error(`Request failed: ${response.status}`);
-        }
-
-        const history = await response.json();
-
-        if (!Array.isArray(history) || history.length === 0) {
-            container.innerHTML =
-                `<p class="release-log-empty">No release history available yet.</p>`;
-            return;
-        }
-
-        container.innerHTML = history.map(entry => {
-
-            const notes = (entry.notes || [])
-                .map(note => `<li>${escapeHtml(note)}</li>`)
-                .join("");
-
-            return `
-                <div class="release-log-entry">
-                    <div class="release-log-entry-header">
-                        <span class="release-log-version">v${escapeHtml(entry.version || "-")}</span>
-                        ${entry.date ? `<span class="release-log-date">${escapeHtml(entry.date)}</span>` : ""}
-                    </div>
-                    <ul>${notes}</ul>
-                </div>
-            `;
-
-        }).join("");
-
-        releaseLogLoaded = true;
-
-    } catch (err) {
-
-        console.error("Unable to load release log:", err);
-
-        container.innerHTML =
-            `<p class="release-log-empty">Unable to load release history.</p>`;
-
-    }
-
-}
-
-function escapeHtml(str) {
-    return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
-}
-
 const claimsContainer = document.getElementById("claimsContainer");
 
 const summary = document.getElementById("summary");
@@ -1169,8 +1103,6 @@ if (aboutBtn && aboutModal && closeAbout) {
             "Checking for updates...";
 
         await checkForUpdates();
-
-        loadReleaseLog();
 
         window.electronAPI.onDownloadProgress((percent) => {
 
